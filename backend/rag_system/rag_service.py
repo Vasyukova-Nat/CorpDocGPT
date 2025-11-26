@@ -71,13 +71,8 @@ class RAGService:
         try:
             print("Вопрос: ", question, " \n")
             relevant_docs = self.ingest_component.query(question)
-            context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
-            context1 = relevant_docs[0].text
-            context2 = relevant_docs[1].text
-            context3 = relevant_docs[2].text
-            
-            if not context:
-                # Нет документов - сразу возвращаем сообщение об отсутствии информации
+
+            if not relevant_docs:
                 yield {
                     "type": "sources", 
                     "sources": [],
@@ -86,11 +81,42 @@ class RAGService:
                 }
                 yield {
                     "type": "content", 
-                    "content": "В базе знаний МТУСИ нет информации по данному вопросу.",
+                    "content": "В базе знаний МТУСИ пока нет документов. Пожалуйста, загрузите документы через раздел 'База документов'.",
                     "done": True
                 }
                 return
+        
+            # context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
+            context_parts = []
+            context1 = ""
+            context2 = "" 
+            context3 = ""
             
+            for i, doc in enumerate(relevant_docs[:3]):
+                if i < len(relevant_docs):
+                    context_parts.append(doc.text)
+                    if i == 0:
+                        context1 = doc.text
+                    elif i == 1:
+                        context2 = doc.text
+                    elif i == 2:
+                        context3 = doc.text
+
+            context = "\n\n".join(context_parts)
+
+            if not context.strip():
+                yield {
+                    "type": "sources", 
+                    "sources": [],
+                    "sources_count": 0,
+                    "has_sources": False
+                }
+                yield {
+                    "type": "content", 
+                    "content": "В загруженных документах нет информации по данному вопросу.",
+                    "done": True
+                }
+                return
             
             prompt = f"""Ты корпоративный AI-ассистент МТУСИ. 
 
