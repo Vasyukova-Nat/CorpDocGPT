@@ -1,6 +1,7 @@
 data/
 temp_documents/
 user_docs/
+*.spec
 
 # Python
 __pycache__/
