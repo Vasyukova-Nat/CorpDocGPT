@@ -3,7 +3,7 @@ echo Установка PyInstaller...
 pip install pyinstaller
 
 echo Создание спецификации для сборки...
-pyinstaller --name corporate-assistant ^
+pyinstaller --name backend ^
   --onefile ^
   --add-data "rag_system;rag_system" ^
   --hidden-import=rag_system.ingest_component ^
