@@ -3,6 +3,8 @@ export interface Document {
   filename: string;
   uploadDate: string;
   size: number;
+  type: string;
+  chunks_count?: number;
 }
 
 export interface ChatMessage {

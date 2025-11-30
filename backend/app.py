@@ -105,6 +105,7 @@ async def rag_upload_document(file: UploadFile = File(...)):
         temp_dir = "./temp_documents"
         os.makedirs(temp_dir, exist_ok=True)
         
+        original_filename = file.filename
         temp_filename = f"{temp_dir}/temp_{uuid.uuid4()}{file_extension}"
         
         with open(temp_filename, "wb") as f:
@@ -112,7 +113,7 @@ async def rag_upload_document(file: UploadFile = File(...)):
             f.write(content)
         
         logger.info(f"Starting ingestion of {file.filename}")
-        result = rag_service.add_document(temp_filename)
+        result = rag_service.add_document(temp_filename, original_filename)
         
         # Очищаем временный файл ВНЕ зависимости от результата
         try:
@@ -127,7 +128,7 @@ async def rag_upload_document(file: UploadFile = File(...)):
         
         return {
             "success": True,
-            "filename": file.filename,
+            "filename": original_filename,
             "message": "Document successfully added to corporate knowledge base",
             "document_id": str(uuid.uuid4())
         }
@@ -272,6 +273,72 @@ async def chat_stream(request: RAGQueryRequest):
             "Connection": "keep-alive",
         }
     )
+
+# ==================== DOCUMENTS LIST & MANAGEMENT ====================
+
+@app.get("/api/rag/documents")
+async def rag_get_documents():
+    """Получить список всех документов в базе знаний"""
+    try:
+        documents = rag_service.get_documents_list()
+        return documents
+        
+    except Exception as e:
+        logger.error(f"Error getting documents list: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting documents: {str(e)}")
+
+@app.delete("/api/rag/documents/{document_id}")
+async def rag_delete_document(document_id: str):
+    """Удалить документ из базы знаний по ID"""
+    try:
+        result = rag_service.delete_document(document_id)
+        
+        if not result.get("success", False):
+            raise HTTPException(status_code=404, detail=result.get("message", "Document not found"))
+        
+        return {
+            "success": True,
+            "message": f"Document {document_id} successfully deleted"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting document {document_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
+
+# ==================== FILE ACCESS ====================
+
+@app.get("/api/rag/documents/{document_id}/file")
+async def rag_get_document_file(document_id: str):
+    """Получить информацию о файле для открытия"""
+    try:
+        # Получаем список документов чтобы найти файл
+        documents = rag_service.get_documents_list()
+        target_doc = None
+        
+        for doc in documents:
+            if doc['id'] == document_id:
+                target_doc = doc
+                break
+        
+        if not target_doc:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Возвращаем информацию о файле
+        return {
+            "filename": target_doc['filename'],
+            "type": target_doc['type'],
+            "size": target_doc['size'],
+            "uploadDate": target_doc['uploadDate'],
+            "can_preview": target_doc['type'] in ['pdf', 'txt', 'md']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document file info {document_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting document info: {str(e)}")
 
 # ==================== HEALTH & UTILS ====================
 

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List, Generator
 import ollama
 from .ingest_component import IngestComponent
 from typing import Generator, Dict
@@ -10,10 +10,10 @@ class RAGService:
         # self.model = "llama3.2:1b"
         self.model = "qwen2.5:0.5b"
     
-    def add_document(self, file_path: str) -> Dict:
+    def add_document(self, file_path: str, original_filename: str = None) -> Dict:
         """Добавить документ в базу знаний"""
         try:
-            success = self.ingest_component.ingest_file(file_path)
+            success = self.ingest_component.ingest_file(file_path, original_filename)
             return {
                 "success": success,
                 "file_path": file_path,
@@ -175,3 +175,18 @@ class RAGService:
     def get_knowledge_base_stats(self) -> Dict:
         """Получить статистику базы знаний"""
         return self.ingest_component.get_stats()
+    
+    def get_documents_list(self) -> List[dict]:
+        """Получить список документов"""
+        return self.ingest_component.get_documents_list()
+    
+    def delete_document(self, document_id: str) -> Dict:
+        """Удалить документ из базы знаний по ID"""
+        try:
+            success = self.ingest_component.delete_document(document_id)
+            return {
+                "success": success,
+                "message": f"Document {document_id} successfully deleted" if success else f"Document {document_id} not found"
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}

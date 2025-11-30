@@ -32,6 +32,7 @@ export const apiService = {
   getDocuments: async (): Promise<Document[]> => {
     try {
       const response = await api.get('/api/rag/documents');
+      console.log('Documents response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -39,8 +40,14 @@ export const apiService = {
     }
   },
 
-  deleteDocument: async (documentId: string): Promise<void> => {
-    await api.delete(`/api/rag/documents/${documentId}`);
+  getDocumentFileInfo: async (documentId: string): Promise<any> => {
+    const response = await api.get(`/api/rag/documents/${documentId}/file`);
+    return response.data;
+  },
+
+  deleteDocument: async (filename: string): Promise<void> => {
+    const encodedFilename = encodeURIComponent(filename);
+    await api.delete(`/api/rag/documents/${encodedFilename}`);
   },
 
   queryDocuments: async (question: string): Promise<RAGResponse> => {
