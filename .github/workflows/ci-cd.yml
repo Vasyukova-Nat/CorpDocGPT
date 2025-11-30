@@ -59,17 +59,17 @@ jobs:
     
     - name: Install frontend dependencies
       run: |
-        cd frontend
-        npm ci
+        cd frontend/CorpDocGPTdesktop
+        npm install
     
     - name: Type check
       run: |
-        cd frontend
+        cd frontend/CorpDocGPTdesktop
         npx tsc --noEmit || echo "TypeScript check completed"
     
     - name: Build frontend
       run: |
-        cd frontend
+        cd frontend/CorpDocGPTdesktop
         npm run build
 
   lint-code:
@@ -139,12 +139,12 @@ jobs:
     
     - name: Install frontend dependencies
       run: |
-        cd frontend
-        npm ci
+        cd frontend/CorpDocGPTdesktop
+        npm install
     
     - name: Build Tauri application
       run: |
-        cd frontend
+        cd frontend/CorpDocGPTdesktop
         npm run tauri build
     
     - name: Upload Windows artifacts
@@ -152,7 +152,7 @@ jobs:
       with:
         name: windows-build
         path: |
-          frontend/src-tauri/target/release/*.exe
+          frontend/CorpDocGPTdesktop/src-tauri/target/release/*.exe
           backend/dist/*.exe
         retention-days: 30
 
@@ -174,7 +174,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        # УБРАЛ кэширование полностью
     
     - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -195,19 +194,19 @@ jobs:
     
     - name: Install frontend dependencies
       run: |
-        cd frontend
-        npm ci
+        cd frontend/CorpDocGPTdesktop
+        npm install
     
     - name: Build Tauri application for Linux
       run: |
-        cd frontend
+        cd frontend/CorpDocGPTdesktop
         npm run tauri build
     
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v4
       with:
         name: linux-build
-        path: frontend/src-tauri/target/release/
+        path: frontend/CorpDocGPTdesktop/src-tauri/target/release/
         retention-days: 30
 
   create-release:
