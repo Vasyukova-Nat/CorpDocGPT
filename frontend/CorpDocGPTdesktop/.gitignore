@@ -189,3 +189,11 @@ test-results/
 # Temporary folders
 tmp/
 temp/
+
+#Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+test_results/
+*.cover
