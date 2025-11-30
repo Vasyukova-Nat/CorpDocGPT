@@ -14,6 +14,7 @@ export interface ChatMessage {
   timestamp: string;
   sources?: string[];
   isStreaming?: boolean;
+  status?: 'thinking' | 'streaming' | 'completed';
 }
 
 export interface ChatInterfaceProps {
