@@ -8,7 +8,7 @@ import {
   useTheme,
   CircularProgress,
 } from '@mui/material';
-import { Person as UserIcon, Schedule as ThinkingIcon } from '@mui/icons-material';
+import { Person as UserIcon } from '@mui/icons-material';
 import { Logo } from '../Common/Logo';
 import { ChatMessage } from '../../types';
 
