@@ -42,52 +42,64 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
     setError(null);
 
-    // Создаем временное сообщение ассистента для streaming
     const assistantMessageId = (Date.now() + 1).toString();
     const tempAssistantMessage: ChatMessage = {
       id: assistantMessageId,
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString(),
-      isStreaming: true,
+      isStreaming: false,
+      status: 'thinking',
     };
-    
+  
     onNewMessage(tempAssistantMessage, false);
+
     let currentContent = '';
 
     try {
       await apiService.queryDocumentsStream(content, (chunk) => {
         switch (chunk.type) {
           case 'sources':
-            // Обновляем существующее сообщение с источниками
             onUpdateMessage(assistantMessageId, {
               sources: chunk.sources,
             });
             break;
-            
+
           case 'content':
             if (chunk.content) {
               currentContent += chunk.content;
-              onUpdateMessage(assistantMessageId, {
-                content: currentContent,
-                isStreaming: !chunk.done,
-              });
-            }
             
-            // Когда streaming завершен
+              if (currentContent === chunk.content) {
+                onUpdateMessage(assistantMessageId, {
+                  content: currentContent,
+                  isStreaming: !chunk.done,
+                  status: 'streaming',
+                  timestamp: new Date().toISOString(),
+                });
+              } else {
+                onUpdateMessage(assistantMessageId, {
+                  content: currentContent,
+                  isStreaming: !chunk.done,
+                  status: chunk.done ? 'completed' : 'streaming',
+                });
+              }
+            }
+         
             if (chunk.done) {
               onUpdateMessage(assistantMessageId, {
                 content: currentContent,
                 isStreaming: false,
+                status: 'completed',
               });
             }
             break;
-            
+
           case 'error':
             setError(chunk.content);
             onUpdateMessage(assistantMessageId, {
               content: `Ошибка: ${chunk.content}`,
               isStreaming: false,
+              status: 'completed',
             });
             break;
         }
@@ -99,6 +111,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       onUpdateMessage(assistantMessageId, {
         content: 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.',
         isStreaming: false,
+        status: 'completed',
       });
     } finally {
       setIsLoading(false);

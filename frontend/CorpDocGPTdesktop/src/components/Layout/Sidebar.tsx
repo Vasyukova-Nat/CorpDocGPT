@@ -17,6 +17,7 @@ import {
   Folder as DocumentsIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  ChevronLeft as CloseIcon,
 } from '@mui/icons-material';
 import { Logo } from '../Common/Logo';
 import { ChatHistoryItem } from '../../types';
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentPage,
   onPageChange,
   open,
+  onToggle,
   currentChatId,
   chatHistory,
   onChatSelect,
@@ -69,9 +71,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <Drawer
       variant="persistent"
       open={open}
+      onClose={onToggle}
       sx={{
-        width: open ? 320 : 0,
-        flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: 320,
           boxSizing: 'border-box',
@@ -80,15 +81,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
           backgroundColor: 'primary.main',
           color: 'white',
           transition: 'transform 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
+          transform: open ? 'translateX(0)' : 'translateX(-100%)',
+          height: '100vh',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 1200,
         },
       }}
+      ModalProps={{
+        keepMounted: true,
+      }}
     >
-      {/* Заголовок с белым логотипом и текстом */}
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Logo size="small" white={true} />
-        <Typography variant="h6" fontWeight="bold" color="white">
-          МТУСИ
-        </Typography>
+      {/* Заголовок с логотипом и кнопкой закрытия */}
+      <Box sx={{ 
+        p: 2, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Logo size="small" white={true} />
+          <Typography variant="h6" fontWeight="bold" color="white">
+            МТУСИ
+          </Typography>
+        </Box>
+
+        {/* Кнопка закрытия сайдбара */}
+        <Tooltip title="Скрыть боковую панель">
+          <IconButton
+            onClick={onToggle}
+            sx={{
+              color: 'white',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.2)',
+              },
+              transition: 'all 0.15s ease-in-out',
+              width: 32,
+              height: 32,
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />

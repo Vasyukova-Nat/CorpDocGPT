@@ -152,15 +152,19 @@ function App() {
     return currentChat ? currentChat.messages : [];
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', height: '100vh' }}>
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <Sidebar 
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           open={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onToggle={toggleSidebar}
           currentChatId={currentChatId}
           chatHistory={chatHistory}
           onChatSelect={handleChatSelect}
@@ -168,13 +172,30 @@ function App() {
           onDeleteChat={deleteChat}
         />
         
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Основной контент - хедер и чат/документы */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          minWidth: 0,
+          transition: 'margin-left 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
+          marginLeft: sidebarOpen ? '320px' : '0px',
+          width: sidebarOpen ? 'calc(100% - 320px)' : '100%',
+        }}>
+          {/* Хедер всегда на своем месте */}
           <Header 
             onThemeToggle={toggleTheme}
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            onMenuToggle={toggleSidebar}
+            onNewChat={handleNewChat}
+            sidebarOpen={sidebarOpen}
           />
           
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {/* Контент чата/документов */}
+          <Box sx={{ 
+            flex: 1, 
+            overflow: 'auto',
+            width: '100%',
+          }}>
             {currentPage === 'chat' ? (
               <ChatInterface 
                 chatId={currentChatId}

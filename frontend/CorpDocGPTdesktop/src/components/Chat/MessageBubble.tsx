@@ -90,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
           display: 'flex',
           alignItems: 'flex-start',
           gap: 1.5,
-          maxWidth: '65%',
+          maxWidth: '70%',
           flexDirection: isUser ? 'row-reverse' : 'row',
         }}
       >
