@@ -4,6 +4,7 @@ import {
   TextField,
   IconButton,
   Paper,
+  Tooltip,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -18,7 +19,7 @@ interface ChatInputProps {
 export const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   disabled = false,
-  placeholder = "Задайте вопрос о документах университета..." 
+  placeholder = "Задайте вопрос о документах университета..."
 }) => {
   const [message, setMessage] = useState('');
 
@@ -30,7 +31,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -41,60 +42,71 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <Paper
       component="form"
       onSubmit={handleSubmit}
-      elevation={1}
+      elevation={0}
       sx={{
-        p: 1.5, // Уменьшил padding
+        p: 0,
         borderRadius: 2,
-        backgroundColor: 'background.paper',
+        backgroundColor: 'transparent',
+        position: 'relative',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <TextField
           fullWidth
           multiline
-          maxRows={1}
+          maxRows={4}
           placeholder={placeholder}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
           variant="outlined"
           sx={{
             '& .MuiOutlinedInput-root': {
-              borderRadius: 1.5,
+              borderRadius: 2,
+              backgroundColor: 'background.paper',
               '& textarea': {
                 resize: 'none',
                 minHeight: '20px',
-                maxHeight: '20px',
+                maxHeight: '80px',
                 lineHeight: '20px',
-                padding: '8px 12px',
+                padding: '12px 16px',
                 fontSize: '0.9rem',
               },
               '& fieldset': {
-                borderColor: 'divider',
+                border: 'none',
+              },
+              '&:hover fieldset': {
+                border: 'none',
+              },
+              '&.Mui-focused fieldset': {
+                border: 'none',
+                boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
               },
             },
           }}
         />
         
-        <IconButton
-          type="submit"
-          disabled={!message.trim() || disabled}
-          sx={{
-            height: '40px',
-            width: '40px',
-            backgroundColor: 'primary.main',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-            },
-            '&:disabled': {
-              backgroundColor: 'action.disabled',
-            },
-          }}
-        >
-          <SendIcon sx={{ fontSize: 18 }} />
-        </IconButton>
+        <Tooltip title="Отправить сообщение">
+          <IconButton
+            type="submit"
+            disabled={!message.trim() || disabled}
+            sx={{
+              height: '48px',
+              width: '48px',
+              backgroundColor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+              },
+              '&:disabled': {
+                backgroundColor: 'action.disabled',
+              },
+            }}
+          >
+            <SendIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
     </Paper>
   );

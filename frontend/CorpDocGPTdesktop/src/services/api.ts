@@ -55,7 +55,6 @@ export const apiService = {
     return response.data;
   },
 
-  // заменили chatStream на queryDocumentsStream
   queryDocumentsStream: async (question: string, onChunk: (chunk: any) => void): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/api/rag/query/stream`, {
       method: 'POST',
