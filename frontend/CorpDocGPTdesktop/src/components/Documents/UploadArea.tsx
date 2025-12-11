@@ -167,6 +167,15 @@ export const UploadArea: React.FC = () => {
               size="small" 
               onClick={clearAll}
               disabled={uploadMutation.isPending}
+              sx={{
+                color: isDarkMode ? 'white' : 'primary.main',
+                border: isDarkMode ? '1px solid rgba(255,255,255,0.5)' : '1px solid',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.5)' : 'primary.main',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(25, 118, 210, 0.04)',
+                  borderColor: isDarkMode ? 'white' : 'primary.dark',
+                },
+              }}
             >
               Очистить все
             </Button>
@@ -200,6 +209,13 @@ export const UploadArea: React.FC = () => {
             variant="contained"
             component="label"
             startIcon={<UploadIcon />}
+            sx={{
+              backgroundColor: isDarkMode ? 'white' : 'primary.main',
+              color: isDarkMode ? 'primary.main' : 'white',
+              '&:hover': {
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.9)' : 'primary.dark',
+              },
+            }}
           >
             Выбрать файлы
             <input
@@ -216,6 +232,14 @@ export const UploadArea: React.FC = () => {
               variant="outlined"
               onClick={handleUpload}
               disabled={selectedFiles.length === 0}
+              sx={{
+                color: isDarkMode ? 'white' : 'primary.main',
+                borderColor: isDarkMode ? 'white' : 'primary.main',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(25, 118, 210, 0.04)',
+                  borderColor: isDarkMode ? 'white' : 'primary.dark',
+                },
+              }}
             >
               Загрузить все файлы ({selectedFiles.length})
             </Button>

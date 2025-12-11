@@ -6,6 +6,7 @@ import {
   Chip,
   Avatar,
   useTheme,
+  CircularProgress,
 } from '@mui/material';
 import { Person as UserIcon } from '@mui/icons-material';
 import { Logo } from '../Common/Logo';
@@ -52,6 +53,29 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
     />
   );
 
+  const thinkingIndicator = !isUser && message.status === 'thinking' && (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        color: assistantTextColor,
+        opacity: 0.7,
+        mt: 0.5,
+      }}
+    >
+      <CircularProgress size={16} />
+      <Typography variant="caption">
+        Ассистент думает...
+      </Typography>
+    </Box>
+  );
+
+  const shouldShowTimestamp = isUser || 
+    message.status === 'streaming' || 
+    message.status === 'completed' || 
+    (message.content && !message.isStreaming);
+
   return (
     <Box
       sx={{
@@ -66,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
           display: 'flex',
           alignItems: 'flex-start',
           gap: 1.5,
-          maxWidth: '65%',
+          maxWidth: '70%',
           flexDirection: isUser ? 'row-reverse' : 'row',
         }}
       >
@@ -110,6 +134,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
             minWidth: '100px',
             position: 'relative',
             boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.6)' : '0 1px 6px rgba(16,24,40,0.04)',
+            opacity: !isUser && message.status === 'thinking' ? 0.8 : 1,
           }}
         >
           <Typography
@@ -125,6 +150,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
             {message.content}
             {streamingCursor}
           </Typography>
+
+          {thinkingIndicator}
 
           {message.sources && message.sources.length > 0 && (
             <Box sx={{ mt: 1 }}>
@@ -160,22 +187,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isLoading
             </Box>
           )}
 
-          <Typography
-            variant="caption"
-            sx={{
-              display: 'block',
-              mt: 0.5,
-              opacity: 0.6,
-              textAlign: isUser ? 'right' : 'left',
-              fontSize: '0.68rem',
-              color: isUser ? userTextColor : assistantTextColor,
-            }}
-          >
-            {new Date(message.timestamp).toLocaleTimeString('ru-RU', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Typography>
+          {shouldShowTimestamp && (
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                mt: 0.5,
+                opacity: 0.6,
+                textAlign: isUser ? 'right' : 'left',
+                fontSize: '0.68rem',
+                color: isUser ? userTextColor : assistantTextColor,
+              }}
+            >
+              {new Date(message.timestamp).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Typography>
+          )}
         </Paper>
       </Box>
     </Box>

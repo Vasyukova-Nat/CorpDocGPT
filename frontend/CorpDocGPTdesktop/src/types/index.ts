@@ -3,6 +3,8 @@ export interface Document {
   filename: string;
   uploadDate: string;
   size: number;
+  type: string;
+  chunks_count?: number;
 }
 
 export interface ChatMessage {
@@ -12,6 +14,7 @@ export interface ChatMessage {
   timestamp: string;
   sources?: string[];
   isStreaming?: boolean;
+  status?: 'thinking' | 'streaming' | 'completed';
 }
 
 export interface ChatInterfaceProps {

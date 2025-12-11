@@ -84,6 +84,8 @@ backend/vector_store/
 .pytest_cache/
 .coverage
 htmlcov/
+test_results/
+*.cover
 
 # Database
 *.db

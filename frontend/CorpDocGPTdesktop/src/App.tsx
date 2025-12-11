@@ -75,6 +75,7 @@ function App() {
     setChatHistory(prev => [newChat, ...prev]);
     setCurrentChatId(newChatId);
     setCurrentPage('chat');
+    return newChatId;
   };
 
   const handleChatSelect = (chatId: string) => {
@@ -82,6 +83,46 @@ function App() {
   };
 
   const handleNewMessage = (message: ChatMessage, isUser: boolean = false) => {
+    const currentChatExists = chatHistory.some(chat => chat.id === currentChatId);
+    
+    if (!currentChatExists && chatHistory.length === 0) {
+      const newChatId = generateChatId();
+      const newChat: ChatHistoryItem = {
+        id: newChatId,
+        title: isUser ? (message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '')) : 'Новый чат',
+        lastMessage: isUser ? message.content : `Ассистент: ${message.content.slice(0, 50)}...`,
+        timestamp: new Date(),
+        messages: [
+          {
+            id: '1',
+            role: 'assistant',
+            content: 'Здравствуйте! Я ваш корпоративный ассистент МТУСИ. Задайте вопрос о документах университета или учебном процессе.',
+            timestamp: new Date().toISOString(),
+          },
+          message
+        ]
+      };
+
+      setChatHistory([newChat]);
+      setCurrentChatId(newChatId);
+      
+      return;
+    } else if (!currentChatExists) {
+      const newChatId = generateChatId();
+      const newChat: ChatHistoryItem = {
+        id: newChatId,
+        title: isUser ? (message.content.slice(0, 30) + (message.content.length > 30 ? '...' : '')) : 'Новый чат',
+        lastMessage: isUser ? message.content : `Ассистент: ${message.content.slice(0, 50)}...`,
+        timestamp: new Date(),
+        messages: [message]
+      };
+
+      setChatHistory(prev => [newChat, ...prev]);
+      setCurrentChatId(newChatId);
+      
+      return;
+    }
+
     setChatHistory(prev => 
       prev.map(chat => {
         if (chat.id === currentChatId) {
@@ -108,6 +149,12 @@ function App() {
   };
 
   const handleUpdateMessage = (messageId: string, updates: Partial<ChatMessage>) => {
+    const currentChatExists = chatHistory.some(chat => chat.id === currentChatId);
+    
+    if (!currentChatExists) {
+      return;
+    }
+
     setChatHistory(prev => 
       prev.map(chat => {
         if (chat.id === currentChatId) {
@@ -139,7 +186,23 @@ function App() {
         if (filteredHistory.length > 0) {
           setCurrentChatId(filteredHistory[0].id);
         } else {
-          handleNewChat();
+          const newChatId = generateChatId();
+          const newChat: ChatHistoryItem = {
+            id: newChatId,
+            title: 'Новый чат',
+            lastMessage: 'Задайте ваш первый вопрос...',
+            timestamp: new Date(),
+            messages: [
+              {
+                id: '1',
+                role: 'assistant',
+                content: 'Здравствуйте! Я ваш корпоративный ассистент МТУСИ. Задайте вопрос о документах университета или учебном процессе.',
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          };
+          setCurrentChatId(newChatId);
+          return [newChat];
         }
       }
       
@@ -152,15 +215,19 @@ function App() {
     return currentChat ? currentChat.messages : [];
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', height: '100vh' }}>
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <Sidebar 
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           open={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onToggle={toggleSidebar}
           currentChatId={currentChatId}
           chatHistory={chatHistory}
           onChatSelect={handleChatSelect}
@@ -168,13 +235,30 @@ function App() {
           onDeleteChat={deleteChat}
         />
         
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Основной контент - хедер и чат/документы */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          minWidth: 0,
+          transition: 'margin-left 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
+          marginLeft: sidebarOpen ? '320px' : '0px',
+          width: sidebarOpen ? 'calc(100% - 320px)' : '100%',
+        }}>
+          {/* Хедер всегда на своем месте */}
           <Header 
             onThemeToggle={toggleTheme}
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            onMenuToggle={toggleSidebar}
+            onNewChat={handleNewChat}
+            sidebarOpen={sidebarOpen}
           />
           
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {/* Контент чата/документов */}
+          <Box sx={{ 
+            flex: 1, 
+            overflow: 'auto',
+            width: '100%',
+          }}>
             {currentPage === 'chat' ? (
               <ChatInterface 
                 chatId={currentChatId}

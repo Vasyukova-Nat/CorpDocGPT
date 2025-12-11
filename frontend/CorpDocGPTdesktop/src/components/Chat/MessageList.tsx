@@ -16,7 +16,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
           key={message.id} 
           message={message}
           isLast={index === messages.length - 1}
-          isLoading={isLoading && message.role === 'assistant' && message.isStreaming}
+          isLoading={isLoading && message.role === 'assistant' && message.status === 'streaming'}
         />
       ))}
     </Box>

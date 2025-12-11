@@ -22,7 +22,6 @@ import {
 import {
   Description as DocumentIcon,
   Delete as DeleteIcon,
-  Download as DownloadIcon,
   PictureAsPdf as PdfIcon,
   Article as WordIcon,
   TextSnippet as TextIcon,
@@ -103,13 +102,29 @@ export const DocumentList: React.FC = () => {
 
   const getFileTypeColor = (filename: string) => {
     const extension = filename.split('.').pop()?.toLowerCase();
-    const colors = {
-      pdf: 'error',
-      docx: 'primary',
-      doc: 'primary',
-      txt: 'success',
+    
+    const colors: { [key: string]: string } = {
+      pdf: '#ff4444',
+      docx: '#2196f3',
+      doc: '#2196f3',
+      txt: '#4caf50',
     };
-    return colors[extension as keyof typeof colors] || 'default';
+    
+    return colors[extension || ''] || (isDarkMode ? '#666666' : '#999999');
+  };
+
+  const getFileTypeBackgroundColor = (filename: string) => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    
+    // Фоновые цвета для разных типов файлов
+    const bgColors: { [key: string]: string } = {
+      pdf: isDarkMode ? 'rgba(255, 68, 68, 0.2)' : 'rgba(255, 68, 68, 0.1)',
+      docx: isDarkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+      doc: isDarkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+      txt: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
+    };
+    
+    return bgColors[extension || ''] || (isDarkMode ? 'rgba(102, 102, 102, 0.2)' : 'rgba(153, 153, 153, 0.1)');
   };
 
   const handleDeleteClick = (document: Document) => {
@@ -121,13 +136,6 @@ export const DocumentList: React.FC = () => {
     if (selectedDocument) {
       deleteMutation.mutate(selectedDocument.id);
     }
-  };
-
-  const handleDownload = async (document: Document) => {
-    // Здесь можно добавить логику скачивания файла
-    console.log('Downloading:', document.filename);
-    // Временное решение - открываем файл в новой вкладке если это URL
-    // window.open(`/api/rag/documents/${document.id}/download`, '_blank');
   };
 
   const handleRetry = () => {
@@ -223,11 +231,15 @@ export const DocumentList: React.FC = () => {
                       <Chip
                         label={doc.filename.split('.').pop()?.toUpperCase()}
                         size="small"
-                        color={getFileTypeColor(doc.filename) as any}
-                        variant="outlined"
                         sx={{
-                          color: isDarkMode ? 'white' : 'inherit',
-                          borderColor: isDarkMode ? 'rgba(255,255,255,0.3)' : 'inherit',
+                          backgroundColor: getFileTypeBackgroundColor(doc.filename),
+                          color: getFileTypeColor(doc.filename),
+                          fontWeight: 'bold',
+                          border: `1px solid ${getFileTypeColor(doc.filename)}`,
+                          '&:hover': {
+                            backgroundColor: getFileTypeColor(doc.filename),
+                            color: 'white',
+                          },
                         }}
                       />
                     </Box>
@@ -248,19 +260,6 @@ export const DocumentList: React.FC = () => {
                 />
                 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Tooltip title="Скачать">
-                    <IconButton 
-                      onClick={() => handleDownload(doc)}
-                      size="small"
-                      sx={{ 
-                        mr: 0.5,
-                        color: isDarkMode ? 'white' : 'inherit',
-                      }}
-                    >
-                      <DownloadIcon />
-                    </IconButton>
-                  </Tooltip>
-                  
                   <Tooltip title="Удалить">
                     <IconButton 
                       onClick={() => handleDeleteClick(doc)}
