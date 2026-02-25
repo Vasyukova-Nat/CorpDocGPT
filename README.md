@@ -1,5 +1,4 @@
-# LAMA (Local AI Management Assistant)
-
+# CorpDocGPT (Corporate document GPT)
 Корпоративный локальный ИИ-ассистент для работы с документами и консультирования сотрудников по регламентам компании.
 
 ### Описание
