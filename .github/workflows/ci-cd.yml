@@ -65,22 +65,22 @@ jobs:
     
     - name: Install frontend dependencies
       run: |
-        cd frontend/CorpDocGPTdesktop
+        cd frontend
         npm install
     
     - name: Type check
       run: |
-        cd frontend/CorpDocGPTdesktop
+        cd frontend
         npx tsc --noEmit || echo "TypeScript check completed"
     
     - name: Build frontend
       run: |
-        cd frontend/CorpDocGPTdesktop
+        cd frontend
         npm run build
     
     - name: Test frontend dev server
       run: |
-        cd frontend/CorpDocGPTdesktop
+        cd frontend
         # Проверяем что dev сервер запускается
         timeout 15s npm run dev || echo "Dev server test completed"
 
