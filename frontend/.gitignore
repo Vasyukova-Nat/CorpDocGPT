@@ -1,3 +1,7 @@
+
+frontend/dist/
+frontend/src-tauri/target/
+
 # Logs
 logs
 *.log
