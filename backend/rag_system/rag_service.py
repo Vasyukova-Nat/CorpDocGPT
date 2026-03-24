@@ -1,7 +1,7 @@
 from typing import Dict, List, Generator
-import ollama
+from langchain_ollama import ChatOllama
+from langchain_core.messages import SystemMessage, HumanMessage
 from .ingest_component import IngestComponent
-from typing import Generator, Dict
 
 class RAGService:
     def __init__(self, data_dir: str = "./data"):
@@ -9,7 +9,27 @@ class RAGService:
         # self.model = "llama3.1:8b"
         # self.model = "llama3.2:1b"
         self.model = "qwen2.5:0.5b"
-    
+
+        self.llm = ChatOllama( # Инициализация LLM
+            model=self.model,
+            temperature=0.1, # Лучше попробовать 0.3
+            num_predict=400,
+            top_k=10,
+            top_p=0.9
+        )
+
+    def _get_system_prompt(self, has_context: bool = False) -> str: # возвращает системный промпт
+        if has_context:
+            return """Ты корпоративный AI-ассистент МТУСИ. Используй предоставленную информацию из базы знаний университета для ответа на вопрос.
+            ТВОЯ ЗАДАЧА: помогать находить информацию в документах базы знаний.
+            Отвечай строго на основе предоставленного контекста из базы знаний. Если в контексте нет информации по вопросу, скажи "В документах МТУСИ нет информации по данному вопросу".
+            Будь точным и кратким."""
+        else:
+            return """Ты корпоративный AI-ассистент МТУСИ.
+            ТВОЯ ЗАДАЧА: помогать находить информацию в документах базы знаний.
+            Если вопрос выходит за рамки твоих знаний, предложи обратиться к официальным документам.
+            Будь точным и кратким."""
+
     def add_document(self, file_path: str, original_filename: str = None) -> Dict:
         """Добавить документ в базу знаний"""
         try:
@@ -26,41 +46,30 @@ class RAGService:
         """Поиск по документам с генерацией ответа"""
         try:
             relevant_docs = self.ingest_component.query(question)
-            
             context = "\n\n".join([doc.text for doc in relevant_docs[:3]])  # Берем топ-3
-            
-            if context:
-                prompt = f"""
-                Ты корпоративный AI-ассистент МТУСИ. Используй предоставленную информацию из базы знаний университета для ответа на вопрос.
+            has_context = bool(context and context.strip())
 
+            messages = [
+                SystemMessage(content=self._get_system_prompt(has_context)),
+                HumanMessage(content=f"""
                 КОНТЕКСТ ИЗ БАЗЫ ЗНАНИЙ МТУСИ:
-                {context}
+                {context if has_context else "Нет релевантных документов"}
 
                 ВОПРОС ПОЛЬЗОВАТЕЛЯ:
                 {question}
 
-                ОТВЕТ (будь точным и используй только информацию из контекста):
-                """
-            else:
-                prompt = f"""
-                Ты корпоративный AI-ассистент МТУСИ. Ответь на вопрос на основе твоих общих знаний о процессах университета.
-
-                ВОПРОС: {question}
-
                 ОТВЕТ:
-                """
+                """)
+            ]            
             
-            response = ollama.generate(
-                model=self.model,
-                prompt=prompt,
-                options={'temperature': 0.3}
-            )
+            response = self.llm.invoke(messages)
             
             return {
-                "answer": response['response'],
+                "answer": response.content,
                 "sources_used": len(relevant_docs),
                 "sources_preview": [doc.metadata.get('file_name', 'Unknown') for doc in relevant_docs[:3]],
-                "context_length": len(context)
+                "context_length": len(context),
+                "has_context": has_context
             }
             
         except Exception as e:
@@ -69,7 +78,7 @@ class RAGService:
     def query_documents_stream(self, question: str) -> Generator[Dict, None, None]:
         """Streaming версия поиска по документам"""
         try:
-            print("Вопрос: ", question, " \n")
+            print(f"Вопрос: {question}")
             relevant_docs = self.ingest_component.query(question)
 
             if not relevant_docs:
@@ -86,7 +95,6 @@ class RAGService:
                 }
                 return
         
-            # context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
             context_parts = []
             context1 = ""
             context2 = "" 
@@ -104,6 +112,7 @@ class RAGService:
 
             context = "\n\n".join(context_parts)
 
+            # context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
             if not context.strip():
                 yield {
                     "type": "sources", 
@@ -118,14 +127,11 @@ class RAGService:
                 }
                 return
             
-            prompt = f"""Ты корпоративный AI-ассистент МТУСИ. 
-
-            ИНФОРМАЦИЯ ИЗ БАЗЫ ЗНАНИЙ:
+            user_message = f"""
+            КОНТЕКСТ ИЗ БАЗЫ ЗНАНИЙ:
             {context}
 
             ВОПРОС: {question}
-
-            Отвечай ТОЛЬКО на основе информации из базы знаний. 
 
             ОТВЕТ:"""
 
@@ -133,15 +139,12 @@ class RAGService:
             print("Контекст 2: \n", context2, "\n")
             print("Контекст 3: \n", context3)
             
-            # Streaming генерация через Ollama
-            stream = ollama.chat(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                stream=True,
-                options={'temperature': 0.1, 'num_predict': 400}
-            )
+            messages = [
+                SystemMessage(content=self._get_system_prompt(has_context=True)),
+                HumanMessage(content=user_message)
+            ]
             
-            # Отправляем информацию об источниках сначала
+            # Отправляем информацию об источниках
             yield {
                 "type": "sources", 
                 "sources": [doc.metadata.get('file_name', 'Unknown') for doc in relevant_docs[:3]],
@@ -149,11 +152,10 @@ class RAGService:
                 "has_sources": True
             }
             
-            # Затем streaming ответ
             full_response = ""
-            for chunk in stream:
-                if 'message' in chunk and 'content' in chunk['message']:
-                    content = chunk['message']['content']
+            for chunk in self.llm.stream(messages): # streaming ответ через langchain
+                content = chunk.content
+                if content:
                     full_response += content
                     yield {
                         "type": "content", 
@@ -161,8 +163,7 @@ class RAGService:
                         "done": False
                     }
             
-            # Финальный chunk
-            yield {
+            yield { # Финальный chunk
                 "type": "content",
                 "content": "",
                 "done": True,
