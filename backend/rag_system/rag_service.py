@@ -40,46 +40,17 @@ class RAGService:
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
-    def query_documents(self, question: str) -> Dict:
-        """Поиск по документам с генерацией ответа"""
-        try:
-            relevant_docs = self.ingest_component.query(question)
-            context = "\n\n".join([doc.text for doc in relevant_docs[:3]])  # Берем топ-3
-            has_context = bool(context and context.strip())
 
-            messages = [
-                SystemMessage(content=self._get_system_prompt(has_context)),
-                HumanMessage(content=f"""
-                КОНТЕКСТ ИЗ БАЗЫ ЗНАНИЙ МТУСИ:
-                {context if has_context else "Нет релевантных документов"}
-
-                ВОПРОС ПОЛЬЗОВАТЕЛЯ:
-                {question}
-
-                ОТВЕТ:
-                """)
-            ]            
-            
-            response = self.llm.invoke(messages)
-            
-            return {
-                "answer": response.content,
-                "sources_used": len(relevant_docs),
-                "sources_preview": [doc.metadata.get('file_name', 'Unknown') for doc in relevant_docs[:3]],
-                "context_length": len(context),
-                "has_context": has_context
-            }
-            
-        except Exception as e:
-            return {"error": str(e), "answer": "Извините, произошла ошибка при поиске в документах"}
-    
-    def query_documents_stream(self, question: str) -> Generator[Dict, None, None]:
-        """Поиск по документам с генерацией ответа с поддержкой Streaming"""
+    def query_documents(self, question: str, stream: bool = False) -> Generator[Dict, None, None] | Dict:
+        """Поиск по документам с генерацией ответа. Поддерживает потоковый и непотоковый режимы.
+        Args:
+            question: Вопрос пользователя
+            stream: Если True - возвращает генератор для стриминга, если False - возвращает словарь с ответом
+        """
         try:
             print(f"Вопрос: {question}")
             relevant_docs = self.ingest_component.query(question)
-        
+                        
             context_parts = []
             context1 = ""
             context2 = "" 
@@ -99,19 +70,28 @@ class RAGService:
             # context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
             has_context = bool(context and context.strip())
             
-            if not context.strip():
-                yield {
-                    "type": "sources", 
-                    "sources": [],
-                    "sources_count": 0,
-                    "has_sources": False
-                }
-                yield {
-                    "type": "content", 
-                    "content": "В загруженных документах нет информации по данному вопросу.",
-                    "done": True
-                }
-                return
+            if not has_context:
+                if stream:
+                    yield {
+                        "type": "sources", 
+                        "sources": [],
+                        "sources_count": 0,
+                        "has_sources": False
+                    }
+                    yield {
+                        "type": "content", 
+                        "content": "В загруженных документах нет информации по данному вопросу.",
+                        "done": True
+                    }
+                    return
+                else:
+                    return {
+                        "answer": "В загруженных документах нет информации по данному вопросу.",
+                        "sources_used": 0,
+                        "sources_preview": [],
+                        "context_length": 0,
+                        "has_context": False
+                    }
             
             user_message = f"""
             КОНТЕКСТ ИЗ БАЗЫ ЗНАНИЙ:
@@ -130,34 +110,49 @@ class RAGService:
                 HumanMessage(content=user_message)
             ]
             
-            # Отправляем информацию об источниках
-            yield {
+            sources_data = { # Инф-я об источниках
                 "type": "sources", 
                 "sources": [doc.metadata.get('file_name', 'Unknown') for doc in relevant_docs[:3]],
                 "sources_count": len(relevant_docs),
                 "has_sources": True
             }
             
-            full_response = ""
-            for chunk in self.llm.stream(messages): # streaming ответ через langchain
-                content = chunk.content
-                if content:
-                    full_response += content
-                    yield {
-                        "type": "content", 
-                        "content": content,
-                        "done": False
-                    }
-            
-            yield { # Финальный chunk
-                "type": "content",
-                "content": "",
-                "done": True,
-                "full_response": full_response
-            }
+            if stream: # Потоковый режим
+                yield sources_data
+                
+                full_response = ""
+                for chunk in self.llm.stream(messages):
+                    content = chunk.content
+                    if content:
+                        full_response += content
+                        yield {
+                            "type": "content", 
+                            "content": content,
+                            "done": False
+                        }
+                
+                yield {
+                    "type": "content",
+                    "content": "",
+                    "done": True,
+                    "full_response": full_response
+                }
+            else: # Непотоковый режим
+                response = self.llm.invoke(messages)
+                return {
+                    "answer": response.content,
+                    "sources_used": len(relevant_docs),
+                    "sources_preview": [doc.metadata.get('file_name', 'Unknown') for doc in relevant_docs[:3]],
+                    "context_length": len(context),
+                    "has_context": has_context
+                }
             
         except Exception as e:
-            yield {"type": "error", "content": f"Ошибка: {str(e)}"}
+            error_msg = f"Ошибка: {str(e)}"
+            if stream:
+                yield {"type": "error", "content": error_msg}
+            else:
+                return {"error": error_msg, "answer": "Извините, произошла ошибка при поиске в документах"}
 
     def get_knowledge_base_stats(self) -> Dict:
         """Получить статистику базы знаний"""
