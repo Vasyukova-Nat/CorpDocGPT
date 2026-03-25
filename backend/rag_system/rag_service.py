@@ -1,4 +1,4 @@
-from typing import Dict, List, Generator
+from typing import Dict, List, Generator, Union
 from langchain_ollama import ChatOllama
 from langchain_core.messages import SystemMessage, HumanMessage
 from .ingest_component import IngestComponent
@@ -41,7 +41,7 @@ class RAGService:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def query_documents(self, question: str, stream: bool = False) -> Generator[Dict, None, None] | Dict:
+    def query_documents(self, question: str, stream: bool = False) -> Union[Generator[Dict, None, None], Dict]:
         """Поиск по документам с генерацией ответа. Поддерживает потоковый и непотоковый режимы.
         Args:
             question: Вопрос пользователя
