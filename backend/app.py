@@ -158,7 +158,7 @@ async def rag_query(request: RAGQueryRequest):
         if not request.question or not request.question.strip():
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
-        result = rag_service.query_documents(request.question.strip())
+        result = rag_service.query_documents(request.question.strip(), stream=False)
         
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
@@ -175,14 +175,14 @@ async def rag_query(request: RAGQueryRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query error: {str(e)}")
-
+    
 @app.post("/api/rag/query/stream")
 async def rag_query_stream(request: RAGQueryRequest):
     """Streaming запрос к базе знаний компании"""
     async def generate():
         try:
             # Получаем streaming ответ от RAG сервиса
-            for chunk in rag_service.query_documents_stream(request.question):
+            for chunk in rag_service.query_documents(request.question, stream=True):
                 yield f"data: {json.dumps(chunk)}\n\n"
                 
         except Exception as e:
