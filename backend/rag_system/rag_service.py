@@ -30,8 +30,7 @@ class RAGService:
             Если вопрос выходит за рамки твоих знаний, предложи обратиться к официальным документам.
             Будь точным и кратким."""
 
-    def add_document(self, file_path: str, original_filename: str = None) -> Dict:
-        """Добавить документ в базу знаний"""
+    def add_document(self, file_path: str, original_filename: str = None) -> Dict: # Добавить документ в базу знаний
         try:
             success = self.ingest_component.ingest_file(file_path, original_filename)
             return {
@@ -76,24 +75,10 @@ class RAGService:
             return {"error": str(e), "answer": "Извините, произошла ошибка при поиске в документах"}
     
     def query_documents_stream(self, question: str) -> Generator[Dict, None, None]:
-        """Streaming версия поиска по документам"""
+        """Поиск по документам с генерацией ответа с поддержкой Streaming"""
         try:
             print(f"Вопрос: {question}")
             relevant_docs = self.ingest_component.query(question)
-
-            if not relevant_docs:
-                yield {
-                    "type": "sources", 
-                    "sources": [],
-                    "sources_count": 0,
-                    "has_sources": False
-                }
-                yield {
-                    "type": "content", 
-                    "content": "В базе знаний МТУСИ пока нет документов. Пожалуйста, загрузите документы через раздел 'База документов'.",
-                    "done": True
-                }
-                return
         
             context_parts = []
             context1 = ""
@@ -111,8 +96,9 @@ class RAGService:
                         context3 = doc.text
 
             context = "\n\n".join(context_parts)
-
             # context = "\n\n".join([doc.text for doc in relevant_docs[:3]])
+            has_context = bool(context and context.strip())
+            
             if not context.strip():
                 yield {
                     "type": "sources", 
@@ -129,9 +115,9 @@ class RAGService:
             
             user_message = f"""
             КОНТЕКСТ ИЗ БАЗЫ ЗНАНИЙ:
-            {context}
+            {context if has_context else "Нет релевантных документов"}
 
-            ВОПРОС: {question}
+            ВОПРОС ПОЛЬЗОВАТЕЛЯ: {question}
 
             ОТВЕТ:"""
 
