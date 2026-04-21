@@ -1,16 +1,16 @@
 # CorpDocGPT (Corporate document GPT)
 Корпоративный локальный ИИ-ассистент для работы с документами.
 
-### Описание
+## Описание
 Desktop-приложение с локальной языковой моделью для анализа внутренних документов и консультаций по бизнес-процессам компании. Гарантирует полную конфиденциальность данных.
 - [Презентация с изображениями CorpDocGPT](https://docs.google.com/presentation/d/1hhvXew3PiOmJAOcfRNkn3G0QS-vXuB7Nvo74SzDmbyE/)
 
-### Стек
+## Стек
 - Backend: Python, FastAPI
 - Frontend: React, TypeScript, Tauri, Material-UI
 - LLM/RAG: Ollama, LlamaIndex, ChromaDB, Sentence Transformers
 
-### Ключевые функции
+## Функционал системы
 - Загрузка документов для формирования базы знаний компании
 - Создание и удаление чатов с ИИ-ассистентом
 - Два режима работы: «Только по документам» или «Расширенный» (с общими знаниями ИИ)
@@ -20,8 +20,8 @@ Desktop-приложение с локальной языковой модель
 - Выбор темы интерфейса
 - Полностью локальное развертывание
 
-### Быстрый старт (режим разработки)
-Запуск в 2 терминалах из корня проекта.
+## Быстрый старт (режим разработки)
+Запуск в 2 терминалах.
 1) Backend (терминал 1) из папки backend:
 ```
 pip install -r requirements.txt
@@ -35,7 +35,7 @@ npm run tauri dev
 ```
 Станут доступны: Tauri приложение, веб-приложение (http://localhost:1420/), Swagger (http://localhost:8000/docs). 
 
-### Структура проекта
+## Структура проекта
 ```
 corporate-ai-assistant/
 ├── backend/
@@ -90,6 +90,6 @@ corporate-ai-assistant/
 └── .gitignore
 ```
 
-### Артефакты проекта
+## Артефакты проекта
 - [Project Kanban](https://github.com/users/Vasyukova-Nat/projects/3)
 - [Project Wiki](https://github.com/Vasyukova-Nat/corporate-ai-assistant/wiki)
