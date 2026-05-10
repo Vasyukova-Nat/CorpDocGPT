@@ -79,35 +79,28 @@ class IngestionHelper:
 
     def _read_pdf(self, file_data: Path, file_name: str) -> List[Document]:
         try:
-            from llama_index.readers.file.docs import PDFReader
+            import fitz  # PyMuPDF
+           
+            doc = fitz.open(file_data)
+            all_text = []
+            for page in doc:
+                text = page.get_text()
+                if text.strip():
+                    all_text.append(self._clean_text(text))
+            doc.close()
+
+            if not all_text:
+                return []
             
-            pdf_reader = PDFReader()
-            documents = pdf_reader.load_data(file_data)
+            document = Document(
+                text="\n\n".join(all_text),
+                metadata={"file_name": file_name}
+            )
+            return [document]
             
-            # Создаем новые документы с очищенным текстом вместо изменения существующих
-            cleaned_documents = []
-            for doc in documents:
-                cleaned_text = self._clean_text(doc.text)
-                # Создаем новый документ с очищенным текстом
-                new_doc = Document(
-                    text=cleaned_text,
-                    metadata=doc.metadata.copy(),
-                    id_=doc.id_,
-                    embedding=doc.embedding,
-                    excluded_embed_metadata_keys=doc.excluded_embed_metadata_keys,
-                    excluded_llm_metadata_keys=doc.excluded_llm_metadata_keys
-                )
-                cleaned_documents.append(new_doc)
-                
-            logger.info("PDF reader processed %s with %s documents", file_name, len(cleaned_documents))
-            return cleaned_documents
-            
-        except ImportError as e:
-            logger.error("PDFReader not available, falling back to text: %s", e)
-            return self._read_as_text(file_data, file_name)
         except Exception as e:
-            logger.error("PDF reading failed for %s: %s", file_name, e)
-            return self._read_as_text(file_data, file_name)
+            logger.error("PDF reading failed: %s: %s", file_name, e)
+            return []
 
     def _clean_text(self, text: str) -> str:
         """Очищает текст от лишних пробелов и артефактов"""
